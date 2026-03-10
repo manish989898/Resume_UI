@@ -67,7 +67,7 @@ function App() {
       <Navbar 
         isLoggedIn={isAuthenticated} 
         handleLogin={handleLogin} 
-        handleLogout={handleLogout} 
+        handleLogout={handleLogout}
       />
     </>
   );

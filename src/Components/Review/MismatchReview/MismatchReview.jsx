@@ -1,17 +1,18 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { approveInvoice, rejectInvoice, selectAllInvoices, selectInvoice } from '../../../reduxToolkit/slices/invoiceSlice';
+import { rejectInvoice, selectAllInvoices, selectInvoice, fetchMismatchInvoices, selectMismatchStatus } from '../../../reduxToolkit/slices/invoiceSlice';
 
 // Components
 import InvoiceDetail from './InvoiceDetail';
 
 export default function MismatchReview() {
   const invoices = useSelector(selectAllInvoices);
+  const mismatchStatus = useSelector(selectMismatchStatus);
   const dispatch = useDispatch();
 
-  const handleApprove = (invoiceId) => {
-    dispatch(approveInvoice({ invoiceId }));
-  };
+  React.useEffect(() => {
+    dispatch(fetchMismatchInvoices());
+  }, [dispatch]);
 
   const handleReject = (invoiceId) => {
     dispatch(rejectInvoice({ invoiceId }));
@@ -32,27 +33,35 @@ export default function MismatchReview() {
         <table className="min-w-full table-auto">
           <thead>
             <tr className="bg-gray-100 text-left text-sm text-gray-600">
-              <th className="px-6 py-3 font-medium">VENDOR</th>
               <th className="px-6 py-3 font-medium">INVOICE ID</th>
+              <th className="px-6 py-3 font-medium">VENDOR NAME</th>
               <th className="px-6 py-3 font-medium">ISSUE COUNT</th>
-              <th className="px-6 py-3 font-medium">ACTION</th>
+              <th className="px-6 py-3 font-medium">DETAILS</th>
             </tr>
           </thead>
           <tbody className="text-sm text-gray-700">
+            {mismatchStatus === 'loading' && (
+              <tr>
+                <td className="px-6 py-4 text-center text-gray-500" colSpan={4}>
+                  Loading invoices...
+                </td>
+              </tr>
+            )}
+            {mismatchStatus !== 'loading' && invoices.length === 0 && (
+              <tr>
+                <td className="px-6 py-4 text-center text-gray-500" colSpan={4}>
+                  No invoices found.
+                </td>
+              </tr>
+            )}
             {invoices.map((ele, index) => (
               <tr key={index} className="border-b">
-                <td className="px-6 py-4">{ele.vendor}</td>
                 <td className="px-6 py-4 text-blue-600 font-medium cursor-pointer hover:underline">
                   {ele.invoiceId}
                 </td>
+                <td className="px-6 py-4">{ele.vendor}</td>
                 <td className="px-6 py-4">{ele.issueCount}</td>
                 <td className="px-6 py-4 flex gap-2">
-                  <button 
-                    onClick={() => handleApprove(ele.invoiceId)}
-                    className="bg-[#1B61AD] text-white px-3 py-1 rounded-md text-sm hover:bg-white border border-[#1B61AD] hover:text-[#1B61AD] transition"
-                  >
-                    Approve
-                  </button>
                   <button 
                     onClick={() => handleReject(ele.invoiceId)}
                     className="bg-red-600 text-white px-3 py-1 rounded-md text-sm hover:bg-white border border-red-600 hover:text-red-600 transition"
@@ -60,7 +69,7 @@ export default function MismatchReview() {
                     Reject
                   </button>
                   <button onClick={() => handleViewDetails(ele)} className="bg-gray-200 text-gray-800 px-3 py-1 rounded-md text-sm hover:bg-gray-300">
-                    Details
+                    View
                   </button>
                 </td>
               </tr>

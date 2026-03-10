@@ -1,6 +1,45 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
+// Async thunk for loading mismatch review invoices
+export const fetchMismatchInvoices = createAsyncThunk(
+  'invoices/fetchMismatchInvoices',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await axios.get(
+        'https://arsync.online/billbridge/api/mismatch-review',
+        {
+          headers: token
+            ? {
+                Authorization: `Bearer ${token}`,
+              }
+            : undefined,
+        }
+      );
+
+      const normalizedInvoices = Array.isArray(response.data)
+        ? response.data.map((item) => ({
+            id: item.id ?? null,
+            invoiceId: item['invoice id'] ?? item.invoiceId ?? 'N/A',
+            issueCount: item['issue count'] ?? item.issueCount ?? 0,
+            vendor: item.name ?? item.vendor ?? 'N/A',
+            name: item.name ?? 'N/A',
+            invoiceFileName: item['Invoice File Name'] ?? item.invoiceFileName ?? 'N/A',
+            compareDocumentType: item['Compare Document Type'] ?? item.compareDocumentType ?? 'N/A',
+            compareDocumentName: item['Compare Document Name'] ?? item.compareDocumentName ?? 'N/A',
+            comments: item['Comments'] ?? item.comments ?? 'N/A',
+          }))
+        : [];
+
+      return normalizedInvoices;
+    } catch (error) {
+      console.error('Fetch mismatch invoices error:', error);
+      return rejectWithValue('Failed to load mismatch invoices');
+    }
+  }
+);
+
 // Async thunk for file upload
 export const uploadFile = createAsyncThunk(
   'invoices/uploadFile',
@@ -15,7 +54,7 @@ export const uploadFile = createAsyncThunk(
       formData.append('file', file);
 
       const response = await axios.post(
-        'https://betser.duckdns.org/billbridge/user/upload-global',
+        'https://arsync.online/billbridge/user/upload-global',
         formData,
         {
           headers: {
@@ -43,13 +82,10 @@ export const uploadFile = createAsyncThunk(
 );
 
 const initialState = {
-  invoices: [
-    { vendor: '1234567890', invoiceId: 'INV-000001', issueCount: 4 },
-    { vendor: '1234567890', invoiceId: 'INV-000002', issueCount: 3 },
-    { vendor: '1234567890', invoiceId: 'INV-000003', issueCount: 1 },
-    { vendor: '1234567890', invoiceId: 'INV-000004', issueCount: 3 },
-  ],
+  invoices: [],
   status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
+  mismatchStatus: 'idle',
+  mismatchError: null,
   selectedInvoice: null,
   uploadProgress: 0,
   uploadError: null,
@@ -100,6 +136,19 @@ export const invoicesSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // Fetch mismatch invoices cases
+      .addCase(fetchMismatchInvoices.pending, (state) => {
+        state.mismatchStatus = 'loading';
+        state.mismatchError = null;
+      })
+      .addCase(fetchMismatchInvoices.fulfilled, (state, action) => {
+        state.mismatchStatus = 'succeeded';
+        state.invoices = action.payload;
+      })
+      .addCase(fetchMismatchInvoices.rejected, (state, action) => {
+        state.mismatchStatus = 'failed';
+        state.mismatchError = action.payload || 'Unknown error';
+      })
       // Upload File Cases
       .addCase(uploadFile.pending, (state) => {
         state.status = 'loading';
@@ -137,6 +186,7 @@ export const {
 export const selectAllInvoices = (state) => state.invoices.invoices;
 export const selectSelectedInvoice = (state) => state.invoices.selectedInvoice;
 export const selectUploadStatus = (state) => state.invoices.status;
+export const selectMismatchStatus = (state) => state.invoices.mismatchStatus;
 export const selectUploadProgress = (state) => state.invoices.uploadProgress;
 export const selectUploadError = (state) => state.invoices.uploadError;
 export const selectUploadSuccess = (state) => state.invoices.uploadSuccess;

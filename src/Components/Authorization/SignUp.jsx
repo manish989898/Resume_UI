@@ -16,7 +16,7 @@ import Swal from "sweetalert2";
 import loginImage from "../../assets/images/loginImage.png";
 
 // Logos
-import BillBridgeLogo from "../../assets/logos/BillBridgeLogo";
+import bimDigitalLogo from "../../assets/logos/BimDigitalLogo.png";
 
 export default function Signup({ handleLogin }) {
   const dispatch = useDispatch()
@@ -81,13 +81,13 @@ export default function Signup({ handleLogin }) {
         <div className="w-full md:w-1/2 p-10 flex flex-col justify-center mx-10">
           <div className="mb-6 text-center">
             <div className="flex items-center justify-center space-x-2">
-              <BillBridgeLogo className="h-8 w-auto" />
+              <img src={bimDigitalLogo} alt="BIM Digital Logo" className="h-8 w-auto object-contain" />
               <h1 className="text-2xl font-semibold text-gray-800">
-                BillBridge AI
+                BIM Digital
               </h1>
             </div>
             <h2 className="mt-4 text-xl font-semibold">
-              Welcome to BillBridge AI
+              Welcome to BIM Digital
             </h2>
             <p className="text-gray-500 text-sm mt-1">
               Automate your invoice operations with ease. <br /> Sign up to continue.

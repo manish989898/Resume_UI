@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const API_URL = 'https://betser.duckdns.org/billbridge/user';
+const API_URL = 'https://arsync.online/billbridge/user';
 
 const storedToken = localStorage.getItem('authToken');
 
@@ -23,17 +23,28 @@ export const loginUser = createAsyncThunk(
         config
       );
 
-      console.log('Login API Response:', response.data);
-      
-      // Store the received token in localStorage
-      if (response.data.token) {
-        localStorage.setItem('authToken', response.data.token);
+      const data = response.data;
+      console.log('Login API Response:', data);
+
+      // Backend may return 200 with no token or success: false for wrong credentials
+      if (!data.token) {
+        const msg = data.message || data.error || (typeof data === 'string' ? data : null);
+        return rejectWithValue(msg || 'Invalid email or password. Please try again.');
       }
-      
-      return response.data;
+
+      if (data.token) {
+        localStorage.setItem('authToken', data.token);
+      }
+
+      return data;
     } catch (error) {
-      console.error('Login Error:', error.response?.data?.message || error.message);
-      return rejectWithValue(error.response?.data?.message || 'Login failed');
+      const data = error.response?.data;
+      const message =
+        (data && (data.message || data.error || (typeof data === 'string' ? data : null))) ||
+        error.message ||
+        'Invalid email or password. Please try again.';
+      console.error('Login Error:', message);
+      return rejectWithValue(message);
     }
   }
 );
@@ -108,9 +119,11 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
+        if (!action.payload?.token) return;
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;
+        state.error = null;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;

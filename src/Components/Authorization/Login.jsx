@@ -1,7 +1,7 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 
 // Redux
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from "../../reduxToolkit/slices/authSlice";
 
 // Packages and Libraries
@@ -12,14 +12,13 @@ import { useNavigate } from "react-router-dom";
 import { LoginSchema } from "../../assets/utils/validationSchemas/loginSchema";
 
 // Images
-import loginImage from "../../assets/images/loginImage.png";
-
-// Logos
-import BillBridgeLogo from "../../assets/logos/BillBridgeLogo";
+import loginImage from "../../assets/images/arsynclogin.png";
+import bimDigitalLogo from "../../assets/logos/BimDigitalLogo.png";
 
 export default function Login({handleLogin}) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const authError = useSelector((state) => state.auth?.error);
 
   const [loginError, setLoginError] = useState(null);
 
@@ -31,53 +30,86 @@ export default function Login({handleLogin}) {
     },
     validationSchema: LoginSchema,
     onSubmit: async (values) => {
+      setLoginError(null);
       try {
-        setLoginError(null);
         const resultAction = await dispatch(loginUser({
           email: values.email,
           password_hash: values.password
         }));
-        
+
         if (loginUser.fulfilled.match(resultAction)) {
           // Store token if rememberMe is checked
           if (values.rememberMe) {
             localStorage.setItem('authToken', resultAction.payload.token);
+            localStorage.setItem('userEmail', values.email);
           } else {
             sessionStorage.setItem('authToken', resultAction.payload.token);
+            sessionStorage.setItem('userEmail', values.email);
           }
-          handleLogin(); // Call your existing handleLogin function
-          // navigate('/dashboard');
+          handleLogin();
+        } else if (loginUser.rejected.match(resultAction)) {
+          const message = resultAction.payload;
+          setLoginError(
+            typeof message === 'string' && message
+              ? message
+              : 'Invalid email or password. Please try again.'
+          );
         } else {
-          setLoginError(resultAction.payload || 'Login failed');
+          setLoginError('Invalid email or password. Please try again.');
         }
-      } catch {
-        setLoginError('An unexpected error occurred');
+      } catch (err) {
+        setLoginError(
+          err?.message?.includes('Network')
+            ? 'Unable to connect. Please check your internet and try again.'
+            : 'Something went wrong. Please try again.'
+        );
       }
     }
   });
+
+  // Clear error when user edits email or password
+  const handleChange = (e) => {
+    if (loginError) setLoginError(null);
+    formik.handleChange(e);
+  };
+
+  useEffect(() => {
+    document.title = "Login | BIM Digital";
+  }, []);
+
+  // Show error from Redux when thunk rejects (ensures we display even if resultAction check misses)
+  useEffect(() => {
+    if (authError) {
+      setLoginError(typeof authError === 'string' ? authError : 'Invalid email or password. Please try again.');
+    }
+  }, [authError]);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="flex w-full max-w-6xl overflow-hidden bg-white">
+    <div className="min-h-screen flex items-center justify-center bg-white px-2">
+      <div className="flex flex-col md:flex-row w-full max-w-3xl md:max-w-6xl bg-white shadow-lg rounded-xl overflow-hidden">
         {/* Left Image Section */}
-        <div className="w-1/2 hidden md:block">
+        <div className="md:w-1/2 w-full hidden md:flex items-center justify-center bg-gray-50">
           <img
             src={loginImage}
             alt="AI Invoice Automation"
-            className="object-cover h-full w-full"
+            className="object-contain w-full h-auto max-h-[400px] px-4"
           />
         </div>
 
         {/* Right Form Section */}
-        <div className="w-full md:w-1/2 p-10 flex flex-col justify-center mx-10">
+        <div className="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center mx-auto">
           <div className="mb-6 text-center">
-            <div className="flex items-center justify-center space-x-2">
-              <BillBridgeLogo className="h-8 w-auto" />
-              <h1 className="text-2xl font-semibold text-gray-800">
-                BillBridge AI
-              </h1>
+            <div className="flex flex-col items-center justify-center space-y-2">
+              <img
+                src={bimDigitalLogo}
+                alt="BIM Digital Logo"
+                width={100}
+                height={100}
+                className="object-contain mb-2 md:mb-0"
+              />
             </div>
-            <h2 className="mt-4 text-xl font-semibold">
-              Welcome Back to BillBridge AI
+            <h2 className="mt-1 text-2xl md:text-xl font-semibold text-gray-800">
+              Welcome to BIM Digital
             </h2>
             <p className="text-gray-500 text-sm mt-1">
               Automate your invoice operations with ease. <br /> Sign in to continue.
@@ -85,14 +117,18 @@ export default function Login({handleLogin}) {
           </div>
 
           {loginError && (
-            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md text-sm">
-              {loginError}
+            <div
+              role="alert"
+              className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm text-center flex items-center justify-center gap-2"
+            >
+              <span className="shrink-0 text-red-500" aria-hidden>⚠</span>
+              <span>{loginError}</span>
             </div>
           )}
 
-          <form onSubmit={formik.handleSubmit} className="space-y-4">
+          <form onSubmit={formik.handleSubmit} className="space-y-4 w-full max-w-md mx-auto">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 text-left">
                 Email
               </label>
               <input
@@ -101,7 +137,7 @@ export default function Login({handleLogin}) {
                 type="email"
                 placeholder="Enter your email"
                 className={`mt-1 w-full px-4 py-2 border ${formik.errors.email && formik.touched.email ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring focus:border-blue-500`}
-                onChange={formik.handleChange}
+                onChange={handleChange}
                 onBlur={formik.handleBlur}
                 value={formik.values.email}
               />
@@ -111,7 +147,7 @@ export default function Login({handleLogin}) {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 text-left">
                 Password
               </label>
               <input
@@ -120,7 +156,7 @@ export default function Login({handleLogin}) {
                 type="password"
                 placeholder="Enter your password"
                 className={`mt-1 w-full px-4 py-2 border ${formik.errors.password && formik.touched.password ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring focus:border-blue-500`}
-                onChange={formik.handleChange}
+                onChange={handleChange}
                 onBlur={formik.handleBlur}
                 value={formik.values.password}
               />
@@ -129,7 +165,7 @@ export default function Login({handleLogin}) {
               )}
             </div>
 
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex flex-col md:flex-row items-center justify-between text-sm gap-2">
               <label className="flex items-center space-x-2">
                 <input 
                   type="checkbox" 
