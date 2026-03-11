@@ -106,7 +106,7 @@ export default function Home() {
                 ref={fileInputRef}
                 type="file"
                 multiple
-                accept=".pdf,.doc,.docx,.md"
+                accept=".pdf,.docx,.md"
                 onChange={handleFileChange}
                 className="hidden"
               />
@@ -124,7 +124,7 @@ export default function Home() {
                 <p className="text-gray-500 text-sm">
                   Drag and drop files here, or <span className="text-[#1B61AD] font-medium">browse</span> to upload
                 </p>
-                <p className="text-gray-400 text-xs mt-1">PDF, DOC, DOCX, TXT</p>
+                <p className="text-gray-400 text-xs mt-1">PDF, DOCX, MD</p>
               </div>
               {files.length > 0 && (
                 <ul className="mt-3 space-y-2">
