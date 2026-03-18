@@ -73,9 +73,10 @@ export default function Home() {
     return 'bg-red-400';
   };
 
-  // Build a file:// URI from the Windows path returned by the API
-  const toFileUri = (filePath) =>
-    'file:///' + (filePath || '').replace(/\\/g, '/');
+  // Build the preview URL using the backend /preview endpoint.
+  // Never use file:/// — that only works on the local machine, not the server.
+  const BASE_URL = import.meta.env.VITE_RESUME_API_BASE_URL || '';
+  const toPreviewUrl = (fileName) => `${BASE_URL}/preview/${encodeURIComponent(fileName)}`;
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -214,11 +215,11 @@ export default function Home() {
                     <div>
                       <p className="font-medium text-gray-900">{match.file_name}</p>
                       <a
-                        href={toFileUri(match.file_path)}
+                        href={toPreviewUrl(match.file_name)}
                         target="_blank"
                         rel="noreferrer"
                         className="text-[#1B61AD] text-sm hover:underline"
-                        title={match.file_path}
+                        title={`View ${match.file_name}`}
                       >
                         View Resume
                       </a>
