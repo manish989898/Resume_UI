@@ -35,14 +35,15 @@ export const searchByFile = createAsyncThunk(
   async ({ file, topN = null }, { rejectWithValue }) => {
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('files', file);
+      formData.append('file_type', 'jd');
       if (topN) formData.append('top_n', topN);
 
-      const response = await axios.post(`${BASE_URL}/search/file`, formData, {
+      const response = await axios.post(`${BASE_URL}/upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      return response.data;
+      return response.data.uploaded[0].search_results;
     } catch (error) {
       const detail =
         error.response?.data?.detail ||

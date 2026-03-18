@@ -68,9 +68,9 @@ export default function Home() {
 
   // ── Score colour helper (matches existing green badge style) ──
   const scoreColor = (score) => {
-    if (score >= 0.75) return 'bg-green-500';
+    if (score >= 0.70) return 'bg-green-500';
     if (score >= 0.50) return 'bg-yellow-500';
-    return 'bg-gray-400';
+    return 'bg-red-400';
   };
 
   // Build a file:// URI from the Windows path returned by the API
