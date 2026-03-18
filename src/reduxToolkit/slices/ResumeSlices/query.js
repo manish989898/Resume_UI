@@ -64,6 +64,7 @@ const querySlice = createSlice({
     query: '',                 // echoed query string from API
     totalEvaluated: 0,
     topNRequested: 0,
+    responseTime: null,        // pipeline duration in ms (from API)
     loading: false,
     error: null,
   },
@@ -73,6 +74,7 @@ const querySlice = createSlice({
       state.query = '';
       state.totalEvaluated = 0;
       state.topNRequested = 0;
+      state.responseTime = null;
       state.error = null;
     },
   },
@@ -81,6 +83,7 @@ const querySlice = createSlice({
       .addCase(searchByQuery.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.responseTime = null;
       })
       .addCase(searchByQuery.fulfilled, (state, action) => {
         state.loading = false;
@@ -88,6 +91,7 @@ const querySlice = createSlice({
         state.query = action.payload.query ?? '';
         state.totalEvaluated = action.payload.total_resumes_evaluated ?? 0;
         state.topNRequested = action.payload.top_n_requested ?? 0;
+        state.responseTime = action.payload.response_time_ms ?? null;
       })
       .addCase(searchByQuery.rejected, (state, action) => {
         state.loading = false;

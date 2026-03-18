@@ -23,7 +23,7 @@ export default function Home() {
 
   // Pick the active slice based on last search mode
   const active = searchMode === 'file' ? fileState : queryState;
-  const { results, totalEvaluated, topNRequested, loading, error } = active;
+  const { results, totalEvaluated, topNRequested, responseTime, loading, error } = active;
 
   // ── Form handlers (unchanged) ──
   const handleFileChange = (e) => {
@@ -171,9 +171,19 @@ export default function Home() {
         <section>
           <h2 className="text-xl font-bold text-gray-900 mb-2">Matched Resumes</h2>
           <p className="text-sm text-gray-500 mb-6">
-            {results.length > 0
-              ? `Top ${results.length} of ${totalEvaluated} evaluated resume(s) — top ${topNRequested} requested:`
-              : 'Top matching resumes with confidence score > 50%:'}
+            <span>
+              {results.length > 0
+                ? `Top ${results.length} of ${totalEvaluated} evaluated resume(s)`
+                : 'Top matching resumes with confidence score > 50%:'}
+
+              {responseTime != null && (
+                <span className="ml-3 text-xs text-gray-400 font-normal">
+                  ⏱ {responseTime >= 1000
+                    ? `${(responseTime / 1000).toFixed(2)}s`
+                    : `${Math.round(responseTime)}ms`}
+                </span>
+              )}
+            </span>
           </p>
 
           {/* Loading skeleton */}
