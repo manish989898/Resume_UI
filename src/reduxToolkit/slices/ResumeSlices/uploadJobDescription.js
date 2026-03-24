@@ -45,11 +45,17 @@ export const searchByFile = createAsyncThunk(
 
       return response.data.uploaded[0].search_results;
     } catch (error) {
-      const detail =
+      const rawDetail =
         error.response?.data?.detail ||
         error.response?.data?.message ||
         error.message ||
         'File search failed. Please try again.';
+
+      // Map backend sentinel to a friendly UI message
+      const detail = rawDetail === 'invalid_job_description'
+        ? 'Invalid job description. The uploaded file does not appear to contain a valid job description.'
+        : rawDetail;
+
       return rejectWithValue(detail);
     }
   }
@@ -83,6 +89,10 @@ const uploadJobDescriptionSlice = createSlice({
       .addCase(searchByFile.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.results = [];
+        state.query = '';
+        state.totalEvaluated = 0;
+        state.topNRequested = 0;
         state.responseTime = null;
       })
       .addCase(searchByFile.fulfilled, (state, action) => {

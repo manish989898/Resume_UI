@@ -45,11 +45,17 @@ export const searchByQuery = createAsyncThunk(
 
       return response.data;
     } catch (error) {
-      const detail =
+      const rawDetail =
         error.response?.data?.detail ||
         error.response?.data?.message ||
         error.message ||
         'Search failed. Please try again.';
+
+      // Map backend sentinel to a friendly UI message
+      const detail = rawDetail === 'invalid_job_description'
+        ? 'Invalid job description. Please enter a valid job description or search query.'
+        : rawDetail;
+
       return rejectWithValue(detail);
     }
   }
@@ -83,6 +89,10 @@ const querySlice = createSlice({
       .addCase(searchByQuery.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.results = [];
+        state.query = '';
+        state.totalEvaluated = 0;
+        state.topNRequested = 0;
         state.responseTime = null;
       })
       .addCase(searchByQuery.fulfilled, (state, action) => {
